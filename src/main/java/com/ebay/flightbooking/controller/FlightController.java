@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/flights")
@@ -21,9 +23,12 @@ public class FlightController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createFlight(@Valid @RequestBody CreateFlightRequest req, UriComponentsBuilder uriBuilder) {
+    public ResponseEntity<Void> createFlight(@Valid @RequestBody CreateFlightRequest req) {
         Flight f = flightService.createFlight(req);
-        var uri = uriBuilder.path("/flights/{flightNumber}").buildAndExpand(f.getFlightNumber()).toUri();
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{flightNumber}")
+                .buildAndExpand(f.getFlightNumber())
+                .toUri();
         return ResponseEntity.created(uri).build();
     }
 }

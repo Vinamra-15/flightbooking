@@ -7,7 +7,9 @@ import com.ebay.flightbooking.service.FlightService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/bookings")
@@ -19,10 +21,13 @@ public class BookingController {
     }
 
     @PostMapping
-    public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody CreateBookingRequest req, UriComponentsBuilder uriBuilder) {
+    public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody CreateBookingRequest req) {
         Booking b = flightService.book(req);
-        var resp = new BookingResponse(b.getId(), b.getFlightNumber(), b.getPassengerName(), b.getSeatsBooked());
-        var uri = uriBuilder.path("/bookings/{id}").buildAndExpand(b.getId()).toUri();
+        BookingResponse resp = new BookingResponse(b.getId(), b.getFlightNumber(), b.getPassengerName(), b.getSeatsBooked());
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(b.getId())
+                .toUri();
         return ResponseEntity.created(uri).body(resp);
     }
 

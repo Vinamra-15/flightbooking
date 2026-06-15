@@ -7,32 +7,41 @@ import com.ebay.flightbooking.model.Flight;
 import com.ebay.flightbooking.repository.BookingRepository;
 import com.ebay.flightbooking.repository.FlightRepository;
 import com.ebay.flightbooking.exception.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
+@RequiredArgsConstructor
 public class FlightService {
     private final FlightRepository flightRepository;
     private final BookingRepository bookingRepository;
 
-    public FlightService(FlightRepository flightRepository, BookingRepository bookingRepository) {
-        this.flightRepository = flightRepository;
-        this.bookingRepository = bookingRepository;
-    }
-
     public Flight createFlight(CreateFlightRequest req) {
-        if (flightRepository.exists(req.getFlightNumber())) throw new DuplicateFlightException("Flight already exists");
-        Flight f = new Flight(req.getFlightNumber(), req.getTotalSeats());
+        Objects.requireNonNull(req, "CreateFlightRequest required");
+        String flightNumber = req.getFlightNumber();
+        if (flightRepository.exists(flightNumber)) {
+            throw new DuplicateFlightException("Flight already exists: " + flightNumber);
+        }
+        Flight f = new Flight(flightNumber, req.getTotalSeats());
         return flightRepository.save(f);
     }
 
-    public Booking book(CreateBookingRequest req) {
-        if (req.getSeatsBooked() <= 0) throw new IllegalArgumentException("seatsBooked must be > 0");
-        Flight f = flightRepository.findByFlightNumber(req.getFlightNumber());
-        if (f == null) throw new FlightNotFoundException("Flight not found: " + req.getFlightNumber());
+    private Flight getFlightOrThrow(String flightNumber) {
+        Flight f = flightRepository.findByFlightNumber(flightNumber);
+        if (f == null) throw new FlightNotFoundException("Flight not found: " + flightNumber);
+        return f;
+    }
 
-        var lock = f.getLock();
+    public Booking book(CreateBookingRequest req) {
+        Objects.requireNonNull(req, "CreateBookingRequest required");
+        if (req.getSeatsBooked() <= 0) throw new IllegalArgumentException("seatsBooked must be > 0");
+
+        Flight f = getFlightOrThrow(req.getFlightNumber());
+        ReentrantLock lock = f.getLock();
         lock.lock();
         try {
             int available = f.getTotalSeats() - f.getBookedSeats();
@@ -49,12 +58,12 @@ public class FlightService {
     }
 
     public void cancelBooking(String bookingId) {
+        Objects.requireNonNull(bookingId, "bookingId required");
         Booking b = bookingRepository.findById(bookingId);
         if (b == null) throw new BookingNotFoundException("Booking not found: " + bookingId);
-        Flight f = flightRepository.findByFlightNumber(b.getFlightNumber());
-        if (f == null) throw new FlightNotFoundException("Flight not found for booking: " + b.getFlightNumber());
+        Flight f = getFlightOrThrow(b.getFlightNumber());
 
-        var lock = f.getLock();
+        ReentrantLock lock = f.getLock();
         lock.lock();
         try {
             int newBooked = f.getBookedSeats() - b.getSeatsBooked();

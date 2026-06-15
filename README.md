@@ -60,7 +60,12 @@ Request (if only 2 seats remain and you request 3):
 
 Expected response (409):
   HTTP/1.1 409 Conflict
-  Body: Not enough seats available
+  Body: {
+    "code": "CONFLICT",
+    "message": "Not enough seats available",
+    "timestamp": "2026-06-15T19:26:12.875188300Z",
+    "errors": null
+}
 
 4) Cancel a booking
 
@@ -73,14 +78,14 @@ Expected response:
 Error cases and status codes
 
 - 400 Bad Request: validation failures (missing fields, seatsBooked < 0)
-- 404 Not Found: flight or booking not found
+- 404 Not Found: flight or booking not found, e.g. Body : {
+    "code": "NOT_FOUND",
+    "message": "Booking not found or already cancelled: {id}",
+    "timestamp": "2026-06-15T19:26:42.112634Z",
+    "errors": null
+}
 - 409 Conflict: duplicate flight creation or overbooking
 - 500 Internal Server Error: unexpected errors
-
-Concurrency and correctness
-
-- Seat allocation is protected by a per-flight ReentrantLock. Concurrent bookings for the same flight are serialized to prevent overbooking.
-- Flight creation is atomic using putIfAbsent to avoid duplicates under concurrent requests.
 
 Notes
 

@@ -22,9 +22,11 @@ HTTP API (examples)
 1) Create a flight
 
 Request:
-  curl -i -X POST http://localhost:8080/flights \
+  ```\
+    curl -i -X POST http://localhost:8080/flights \
     -H "Content-Type: application/json" \
     -d '{"flightNumber":"F100","totalSeats":10}'
+```
 
 Expected response:
   HTTP/1.1 201 Created
@@ -34,9 +36,11 @@ Expected response:
 2) Create a booking
 
 Request:
+```
   curl -i -X POST http://localhost:8080/bookings \
     -H "Content-Type: application/json" \
     -d '{"flightNumber":"F100","passengerName":"Alice","seatsBooked":2}'
+```
 
 Expected response (201):
   HTTP/1.1 201 Created
@@ -44,33 +48,41 @@ Expected response (201):
   Location: http://localhost:8080/bookings/{id}
 
   Body (example):
+  ```
   {
     "id": "b5f3e2a8-...",
     "flightNumber": "F100",
     "passengerName": "Alice",
     "seatsBooked": 2
   }
+```
 
 3) Overbooking attempt
 
 Request (if only 2 seats remain and you request 3):
+ ```
   curl -i -X POST http://localhost:8080/bookings \
     -H "Content-Type: application/json" \
     -d '{"flightNumber":"F100","passengerName":"Bob","seatsBooked":9}'
+```
 
 Expected response (409):
   HTTP/1.1 409 Conflict
+  ```
   Body: {
     "code": "CONFLICT",
     "message": "Not enough seats available",
     "timestamp": "2026-06-15T19:26:12.875188300Z",
     "errors": null
 }
+```
 
 4) Cancel a booking
 
 Request:
+```
   curl -i -X DELETE http://localhost:8080/bookings/{id}
+```
 
 Expected response:
   HTTP/1.1 204 No Content
@@ -78,12 +90,15 @@ Expected response:
 Error cases and status codes
 
 - 400 Bad Request: validation failures (missing fields, seatsBooked < 0)
-- 404 Not Found: flight or booking not found, e.g. Body : {
+- 404 Not Found: flight or booking not found, e.g. Body :
+```
+{
     "code": "NOT_FOUND",
     "message": "Booking not found or already cancelled: {id}",
     "timestamp": "2026-06-15T19:26:42.112634Z",
     "errors": null
 }
+```
 - 409 Conflict: duplicate flight creation or overbooking
 - 500 Internal Server Error: unexpected errors
 

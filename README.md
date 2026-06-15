@@ -87,3 +87,13 @@ Notes
 - In-memory storage only; restarting the app clears all flights/bookings.
 - No authentication, no search — clients must know flightNumber.
 
+
+What would I have improved given more time?
+- Fix concurrency/consistency: make booking+persist atomic (use per-flight lock or transactional DB) and avoid removing booking before decrementing    
+  seats.                                                                                                                                               
+- Persistent storage: replace in-memory maps with a simple DB (H2/JPA) so that the state survives restarts.                                                     
+- Add tests unit and integration.                                                                      
+- Add API docs (springdoc/OpenAPI) and health/metrics (actuator + Micrometer).                                                                      
+- Improve error messages & HTTP semantics and include request IDs and structured logging (SLF4J) for tracing.                                                      
+- Introduce interfaces for repositories + DI to ease swapping implementations.
+- Introduce observability (Prometheus / newrelic) and push metrics accordingly. 

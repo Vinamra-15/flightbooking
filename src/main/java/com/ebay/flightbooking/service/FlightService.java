@@ -23,11 +23,14 @@ public class FlightService {
     public Flight createFlight(CreateFlightRequest req) {
         Objects.requireNonNull(req, "CreateFlightRequest required");
         String flightNumber = req.getFlightNumber();
-        if (flightRepository.exists(flightNumber)) {
+        if (flightNumber == null || flightNumber.isBlank()) throw new IllegalArgumentException("flightNumber required");
+
+        Flight flight = new Flight(flightNumber, req.getTotalSeats());
+        Flight existing = flightRepository.saveIfAbsent(flight);
+        if (existing != null) {
             throw new DuplicateFlightException("Flight already exists: " + flightNumber);
         }
-        Flight f = new Flight(flightNumber, req.getTotalSeats());
-        return flightRepository.save(f);
+        return flight;
     }
 
     private Flight getFlightOrThrow(String flightNumber) {
@@ -39,6 +42,8 @@ public class FlightService {
     public Booking book(CreateBookingRequest req) {
         Objects.requireNonNull(req, "CreateBookingRequest required");
         if (req.getSeatsBooked() <= 0) throw new IllegalArgumentException("seatsBooked must be > 0");
+        if (req.getFlightNumber() == null || req.getFlightNumber().isBlank()) throw new IllegalArgumentException("flightNumber required");
+        if (req.getPassengerName() == null || req.getPassengerName().isBlank()) throw new IllegalArgumentException("passengerName required");
 
         Flight f = getFlightOrThrow(req.getFlightNumber());
         ReentrantLock lock = f.getLock();
@@ -66,7 +71,12 @@ public class FlightService {
         ReentrantLock lock = f.getLock();
         lock.lock();
         try {
-            int newBooked = f.getBookedSeats() - b.getSeatsBooked();
+            // Re-check booking under lock to prevent double-cancel races
+            Booking existing = bookingRepository.findById(bookingId);
+            if (existing == null) {
+                throw new BookingNotFoundException("Booking not found or already cancelled: " + bookingId);
+            }
+            int newBooked = f.getBookedSeats() - existing.getSeatsBooked();
             f.setBookedSeats(Math.max(0, newBooked));
             bookingRepository.delete(bookingId);
         } finally {

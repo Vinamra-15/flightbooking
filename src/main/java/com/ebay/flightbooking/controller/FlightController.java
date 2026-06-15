@@ -10,17 +10,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import lombok.RequiredArgsConstructor;
 
 import java.net.URI;
 
 @RestController
 @RequestMapping("/flights")
+@RequiredArgsConstructor
 public class FlightController {
     private final FlightService flightService;
-
-    public FlightController(FlightService flightService) {
-        this.flightService = flightService;
-    }
 
     @PostMapping
     public ResponseEntity<Void> createFlight(@Valid @RequestBody CreateFlightRequest req) {

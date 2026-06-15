@@ -12,4 +12,11 @@ public class FlightRepository {
     public Flight save(Flight f) { flights.put(f.getFlightNumber(), f); return f; }
     public Flight findByFlightNumber(String flightNumber) { return flights.get(flightNumber); }
     public boolean exists(String flightNumber) { return flights.containsKey(flightNumber); }
+
+    /**
+     * Atomically saves the flight only if absent. Returns the existing flight if present, or null if saved.
+     */
+    public Flight saveIfAbsent(Flight f) {
+        return flights.putIfAbsent(f.getFlightNumber(), f);
+    }
 }

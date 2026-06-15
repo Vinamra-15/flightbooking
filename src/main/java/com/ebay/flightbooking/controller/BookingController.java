@@ -8,17 +8,15 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import lombok.RequiredArgsConstructor;
 
 import java.net.URI;
 
 @RestController
 @RequestMapping("/bookings")
+@RequiredArgsConstructor
 public class BookingController {
     private final FlightService flightService;
-
-    public BookingController(FlightService flightService) {
-        this.flightService = flightService;
-    }
 
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody CreateBookingRequest req) {

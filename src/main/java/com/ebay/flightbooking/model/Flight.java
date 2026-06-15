@@ -3,25 +3,31 @@ package com.ebay.flightbooking.model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
 @NoArgsConstructor
 public class Flight {
     private String flightNumber;
     private int totalSeats;
-    private int bookedSeats;
-    private transient ReentrantLock lock = new ReentrantLock();
+    private transient AtomicInteger bookedSeatsAtomic = new AtomicInteger(0);
 
     public Flight(String flightNumber, int totalSeats) {
         this.flightNumber = flightNumber;
         this.totalSeats = totalSeats;
-        this.bookedSeats = 0;
-        this.lock = new ReentrantLock();
+        this.bookedSeatsAtomic = new AtomicInteger(0);
     }
 
-    public ReentrantLock getLock() {
-        if (lock == null) lock = new ReentrantLock();
-        return lock;
+    public int getBookedSeats() {
+        return bookedSeatsAtomic.get();
+    }
+
+    public void setBookedSeats(int seats) {
+        bookedSeatsAtomic.set(seats);
+    }
+
+    public AtomicInteger getBookedSeatsAtomic() {
+        if (bookedSeatsAtomic == null) bookedSeatsAtomic = new AtomicInteger(0);
+        return bookedSeatsAtomic;
     }
 }
